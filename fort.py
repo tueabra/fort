@@ -28,6 +28,7 @@ import inspect
 from subprocess import call
 from ConfigParser import ConfigParser, NoSectionError
 from getpass import getpass
+import shlex
 
 __VERSION__ = 0.1
 
@@ -101,12 +102,15 @@ class Fort(object):
             }
 
     def _loop(self):
-        import shlex
         cmd = []
         while not cmd or cmd[0] not in ['q', 'quit', 'x', 'exit']:
             if cmd:
                 self._run(cmd[0], cmd[1:])
-            cmd = shlex.split(raw_input("fort> ").strip())
+            try:
+                cmd = shlex.split(raw_input("fort> ").strip())
+            except ValueError, e:
+                print " Error:", str(e)
+                cmd = []
 
     def _run(self, command, args):
         if not command in self.methods.keys():
@@ -195,6 +199,9 @@ if __name__ == '__main__':
         do_shell = sys.argv[1] == 'shell'
         fort = Fort(db, shell=do_shell)
         if do_shell:
-            fort._loop()
+            try:
+                fort._loop()
+            except KeyboardInterrupt:
+                pass # Exit quietly
         else:
             fort._run(sys.argv[1], sys.argv[2:])
